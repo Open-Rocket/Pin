@@ -2,7 +2,7 @@
 
 # Pin
 
-Перезапуск ипереосмысление сервиса доставки [Raketa](https://github.com/Open-Rocket/raketa_delivery.git)
+Перезапуск и переосмысление сервиса доставки [Raketa](https://github.com/Open-Rocket/raketa_delivery.git)
 
 ## Основная мысль
 
