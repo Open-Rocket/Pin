@@ -96,34 +96,68 @@ export default function MapComponent({
   onPinLocationChange,
 }: MapProps) {
   const [draggedPinId, setDraggedPinId] = useState<string | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el) return;
+    let startX = 0;
+    let startY = 0;
+    const onStart = (e: TouchEvent) => {
+      startX = e.touches[0]?.clientX || 0;
+      startY = e.touches[0]?.clientY || 0;
+    };
+    const onMove = (e: TouchEvent) => {
+      const curX = e.touches[0]?.clientX || 0;
+      const curY = e.touches[0]?.clientY || 0;
+      const dx = Math.abs(curX - startX);
+      const dy = Math.abs(curY - startY);
+      if (dy > dx && dy > 10) {
+        e.preventDefault();
+      }
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+    };
+  }, []);
 
   return (
-    <MapContainer
-      center={[55.7558, 37.6173]} // Москва по умолчанию
-      zoom={12}
-      style={{ width: '100%', height: '100%' }}
-      scrollWheelZoom={true}
+    <div
+      ref={mapContainerRef}
+      data-allow-scroll
+      style={{ width: '100%', height: '100%', touchAction: 'pan-x pinch-zoom' }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <MapContainer
+        center={[55.7558, 37.6173]}
+        zoom={12}
+        style={{ width: '100%', height: '100%' }}
+        scrollWheelZoom={true}
+        zoomControl={false}
+        attributionControl={false}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &amp; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-      <MapMoveHandler onMapMove={onMapMove} />
-      <MapClickHandler onMapClick={onMapClick} />
+        <MapMoveHandler onMapMove={onMapMove} />
+        <MapClickHandler onMapClick={onMapClick} />
 
-      {pins.map((pin) => {
-        // Создаем кастомный маркер в стиле дизайна с заголовком сверху
-        const titleText =
-          pin.title.length > 20
-            ? pin.title.substring(0, 20) + '...'
-            : pin.title;
+        {pins.map((pin) => {
+          // Создаем кастомный маркер в стиле дизайна с заголовком сверху
+          const titleText =
+            pin.title.length > 20
+              ? pin.title.substring(0, 20) + '...'
+              : pin.title;
 
-        // Цвет для собственного пина - черный, для чужого - зеленый
-        const pinColor = pin.is_own ? '#000000' : '#1a5f3f';
-        const pinTextColor = pin.is_own ? '#ffffff' : '#ffffff';
+          // Цвет для собственного пина - черный, для чужого - зеленый
+          const pinColor = pin.is_own ? '#000000' : '#1a5f3f';
+          const pinTextColor = pin.is_own ? '#ffffff' : '#ffffff';
 
-        const markerHtml = `
+          const markerHtml = `
           <div style="position: relative; display: inline-block; text-align: center;">
             <!-- Заголовок сверху -->
             <div style="
@@ -187,39 +221,40 @@ export default function MapComponent({
           </div>
         `;
 
-        return (
-          <Marker
-            key={pin.id}
-            position={[pin.location.lat, pin.location.lng]}
-            icon={L.divIcon({
-              className: 'custom-pin-icon',
-              html: markerHtml,
-              iconSize: [40, 60],
-              iconAnchor: [20, 60],
-            })}
-            draggable={pin.is_own}
-            eventHandlers={{
-              click: () => {
-                if (onPinClick && draggedPinId !== pin.id) {
-                  onPinClick(pin);
-                }
-              },
-              dragstart: () => {
-                if (pin.is_own) {
-                  setDraggedPinId(pin.id);
-                }
-              },
-              dragend: (event) => {
-                if (pin.is_own && onPinLocationChange) {
-                  const newLatLng = (event.target as any).getLatLng();
-                  onPinLocationChange(pin.id, newLatLng.lat, newLatLng.lng);
-                  setDraggedPinId(null);
-                }
-              },
-            }}
-          />
-        );
-      })}
-    </MapContainer>
+          return (
+            <Marker
+              key={pin.id}
+              position={[pin.location.lat, pin.location.lng]}
+              icon={L.divIcon({
+                className: 'custom-pin-icon',
+                html: markerHtml,
+                iconSize: [40, 60],
+                iconAnchor: [20, 60],
+              })}
+              draggable={pin.is_own}
+              eventHandlers={{
+                click: () => {
+                  if (onPinClick && draggedPinId !== pin.id) {
+                    onPinClick(pin);
+                  }
+                },
+                dragstart: () => {
+                  if (pin.is_own) {
+                    setDraggedPinId(pin.id);
+                  }
+                },
+                dragend: (event) => {
+                  if (pin.is_own && onPinLocationChange) {
+                    const newLatLng = (event.target as any).getLatLng();
+                    onPinLocationChange(pin.id, newLatLng.lat, newLatLng.lng);
+                    setDraggedPinId(null);
+                  }
+                },
+              }}
+            />
+          );
+        })}
+      </MapContainer>
+    </div>
   );
 }

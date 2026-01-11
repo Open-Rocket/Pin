@@ -1,25 +1,6 @@
 {
   "pins": [
     {
-      "id": "3",
-      "title": "Доставить посылку",
-      "description": "Доставить небольшую посылку до метро Красные ворота",
-      "price": 500,
-      "contact_info": {
-        "phone": "+7 999 333 33 33"
-      },
-      "location": {
-        "lat": 55.7458,
-        "lng": 37.6073
-      },
-      "created_at": "2026-01-11T14:15:00Z",
-      "expires_at": "2026-01-11T15:15:00Z",
-      "is_active": true,
-      "views_count": 2,
-      "owner_id": "3",
-      "is_own": false
-    },
-    {
       "id": "a670",
       "title": "Погулять с собакой",
       "description": "Погулять с моей собакой",
@@ -28,8 +9,8 @@
         "phone": "+7 999 350 15 15"
       },
       "location": {
-        "lat": 55.759884353226695,
-        "lng": 37.614909713884124
+        "lat": 55.71388532149338,
+        "lng": 37.61480668588775
       },
       "created_at": "2026-01-11T13:00:00Z",
       "expires_at": "2026-01-11T14:00:00Z",
@@ -110,6 +91,44 @@
       "created_at": "2026-01-11T20:48:43.978Z",
       "expires_at": "2026-01-11T21:48:43.978Z",
       "owner_id": "user-1768164523978",
+      "is_own": true,
+      "views_count": 0,
+      "is_active": true
+    },
+    {
+      "id": "b77a",
+      "title": "a",
+      "description": "a",
+      "price": 2,
+      "contact_info": {
+        "phone": "+7 999 999 99 99"
+      },
+      "location": {
+        "lat": 55.741614369888424,
+        "lng": 37.62107857393858
+      },
+      "created_at": "2026-01-11T21:21:19.269Z",
+      "expires_at": "2026-01-11T22:21:19.269Z",
+      "owner_id": "user-1768166479269",
+      "is_own": true,
+      "views_count": 0,
+      "is_active": true
+    },
+    {
+      "id": "f06f",
+      "title": "Отправить посылку",
+      "description": "Нужно отнести посылку на МГИМО",
+      "price": 300,
+      "contact_info": {
+        "phone": "89287654398"
+      },
+      "location": {
+        "lat": 55.73136326949554,
+        "lng": 37.62559890747071
+      },
+      "created_at": "2026-01-11T23:38:04.851Z",
+      "expires_at": "2026-01-12T00:38:04.851Z",
+      "owner_id": "user-1768174684852",
       "is_own": true,
       "views_count": 0,
       "is_active": true

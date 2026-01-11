@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { WebApp } from '@twa-dev/sdk';
+import '@twa-dev/sdk';
 
 export const useTelegram = () => {
   const [ready, setReady] = useState(false);
-  const [webApp, setWebApp] = useState<WebApp | null>(null);
+  const [webApp, setWebApp] = useState<any | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -26,53 +26,51 @@ export const useTelegram = () => {
         // Если есть глобальный объект, используем SDK
         if (telegramWebApp) {
           if (
-            WebApp &&
-            typeof WebApp === 'object' &&
-            typeof WebApp.ready === 'function'
+            (window as any).WebApp &&
+            typeof (window as any).WebApp === 'object' &&
+            typeof (window as any).WebApp.ready === 'function'
           ) {
-            WebApp.ready();
+            try {
+              (window as any).WebApp.ready();
+            } catch (e) {
+              console.warn('WebApp.ready() failed:', e);
+            }
 
             // 1️⃣ Запрашиваем полноэкранный режим
             try {
-              if (typeof WebApp.expand === 'function') {
-                WebApp.expand();
-              }
+              (window as any).WebApp.expand?.();
             } catch (e) {
               console.warn('expand not available:', e);
             }
 
             // 2️⃣ Запрещаем закрытие свайпом вниз (WebApp API)
             try {
-              if (typeof WebApp.disallowVerticalSwipe === 'function') {
-                WebApp.disallowVerticalSwipe();
-              }
+              (window as any).WebApp.disallowVerticalSwipe?.();
             } catch (e) {
               console.warn('disallowVerticalSwipe not available:', e);
             }
 
             // 3️⃣ Блокируем ориентацию экрана в портретный режим
             try {
-              if (typeof WebApp.lockOrientation === 'function') {
-                WebApp.lockOrientation();
-              }
+              (window as any).WebApp.lockOrientation?.();
             } catch (e) {
               console.warn('lockOrientation not available:', e);
             }
 
             // Показываем кнопку закрытия приложения
-            if (typeof WebApp.showCloseButton === 'function') {
-              WebApp.showCloseButton();
+            if (typeof (window as any).WebApp.showCloseButton === 'function') {
+              (window as any).WebApp.showCloseButton();
             }
 
             // Обработчик для кнопки закрытия
-            if (typeof WebApp.onEvent === 'function') {
-              WebApp.onEvent('backButtonClicked', () => {
+            if (typeof (window as any).WebApp.onEvent === 'function') {
+              (window as any).WebApp.onEvent('backButtonClicked', () => {
                 // Запрашиваем подтверждение перед закрытием
                 if (
                   window.confirm('Вы уверены, что хотите закрыть приложение?')
                 ) {
-                  if (typeof WebApp.close === 'function') {
-                    WebApp.close();
+                  if (typeof (window as any).WebApp.close === 'function') {
+                    (window as any).WebApp.close();
                   }
                 }
               });
@@ -82,7 +80,7 @@ export const useTelegram = () => {
             // Предотвращает закрытие приложения свайпом вниз
             setupTouchLock();
 
-            setWebApp(WebApp);
+            setWebApp((window as any).WebApp);
             initialized = true;
             setReady(true);
             return true;
@@ -90,18 +88,25 @@ export const useTelegram = () => {
         }
 
         // Пробуем использовать SDK напрямую
-        if (WebApp && typeof WebApp === 'object') {
-          const tg = WebApp;
+        if (
+          (window as any).WebApp &&
+          typeof (window as any).WebApp === 'object'
+        ) {
+          const tg = (window as any).WebApp as any;
           // Проверяем, что мы в Telegram (есть initDataUnsafe или version)
           if (
             (tg.initDataUnsafe || tg.version) &&
             typeof tg.ready === 'function'
           ) {
-            tg.ready();
+            try {
+              tg.ready();
+            } catch (e) {
+              console.warn('tg.ready() failed:', e);
+            }
 
             // 1️⃣ Запрашиваем полноэкранный режим
             try {
-              if (typeof tg.expand === 'function') {
+              if (typeof (tg as any).expand === 'function') {
                 tg.expand();
               }
             } catch (e) {
@@ -110,7 +115,7 @@ export const useTelegram = () => {
 
             // 2️⃣ Запрещаем закрытие свайпом вниз (WebApp API)
             try {
-              if (typeof tg.disallowVerticalSwipe === 'function') {
+              if (typeof (tg as any).disallowVerticalSwipe === 'function') {
                 tg.disallowVerticalSwipe();
               }
             } catch (e) {
@@ -119,7 +124,7 @@ export const useTelegram = () => {
 
             // 3️⃣ Блокируем ориентацию экрана в портретный режим
             try {
-              if (typeof tg.lockOrientation === 'function') {
+              if (typeof (tg as any).lockOrientation === 'function') {
                 tg.lockOrientation();
               }
             } catch (e) {
@@ -149,7 +154,7 @@ export const useTelegram = () => {
             // Предотвращает закрытие приложения свайпом вниз
             setupTouchLock();
 
-            setWebApp(tg);
+            setWebApp(tg as any);
             initialized = true;
             setReady(true);
             return true;
@@ -221,6 +226,7 @@ export const useTelegram = () => {
  */
 function setupTouchLock() {
   if (typeof window === 'undefined') return;
+  if ((window as any).__telegramMiniAppTouchLockInstalled) return;
 
   // 1️⃣ БЛОКИРУЕМ touchmove НА BODY И HTML (passive: false для preventDefault)
   const preventTouchMove = (e: TouchEvent) => {
@@ -242,10 +248,11 @@ function setupTouchLock() {
   };
 
   // Добавляем слушатель с passive: false (чтобы preventDefault работал)
+  const onTouchStart = (_e: TouchEvent) => {
+    // no-op: ensure touchstart is present for touchmove detection
+  };
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
   document.addEventListener('touchmove', preventTouchMove, { passive: false });
-  document.body.addEventListener('touchmove', preventTouchMove, {
-    passive: false,
-  });
 
   // 2️⃣ БЛОКИРУЕМ OVERSCROLL ПОВЕДЕНИЕ
   // Это встроенное поведение iOS которое вызывает bounce-эффект
@@ -262,7 +269,7 @@ function setupTouchLock() {
     style.id = 'telegram-miniapp-lock-styles';
     style.textContent = `
       /* Запрещаем overscroll pull-to-refresh на iOS */
-      html, body {
+      html, body, #__next {
         overscroll-behavior: none;
         overscroll-behavior-y: none;
         -webkit-user-select: none;
@@ -271,17 +278,8 @@ function setupTouchLock() {
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* Гарантированно фиксируем html и body */
-      html {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        top: 0;
-        left: 0;
-      }
-
-      body {
+      /* Гарантированно фиксируем html, body и корневой контейнер Next.js */
+      html, body, #__next {
         position: fixed;
         width: 100%;
         height: 100%;
@@ -318,10 +316,14 @@ function setupTouchLock() {
   };
 
   document.addEventListener('wheel', preventWheel, { passive: false });
+  (window as any).__telegramMiniAppTouchLockInstalled = true;
+}
 
-  // 5️⃣ ЛОГИРОВАНИЕ (для отладки)
-  console.log('🔒 Telegram Mini App Touch Lock активирована');
-  console.log('✅ Свайп вниз заблокирован');
-  console.log('✅ Overscroll поведение запрещено');
-  console.log('✅ Body/HTML фиксированы');
+// Ensure touch lock is always installed when running in browser
+if (typeof window !== 'undefined') {
+  try {
+    setupTouchLock();
+  } catch (e) {
+    // ignore
+  }
 }

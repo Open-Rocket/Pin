@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="ru">
       <head />
       <body>
-        {/* 4️⃣ Главный контейнер с фиксированной высотой для скролла */}
+        {/* Главный фиксированный контейнер */}
         <div
           style={{
             position: 'fixed',
@@ -39,7 +39,20 @@ export default function RootLayout({
             src="https://telegram.org/js/telegram-web-app.js"
             strategy="afterInteractive"
           />
-          <TelegramProvider>{children}</TelegramProvider>
+          <TelegramProvider>
+            <div
+              id="app-container"
+              data-allow-scroll
+              style={{
+                width: '100%',
+                height: '100%',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
+              {children}
+            </div>
+          </TelegramProvider>
         </div>
       </body>
     </html>

@@ -1,45 +1,42 @@
-import { WebApp } from '@twa-dev/sdk'
+import '@twa-dev/sdk';
 
 export const initTelegram = () => {
   if (typeof window === 'undefined') {
-    return null
+    return null;
   }
 
   try {
-    // Проверяем наличие глобального объекта Telegram
-    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-      const webApp = WebApp
-      if (webApp && typeof webApp.ready === 'function') {
-        webApp.ready()
-        return webApp
+    const webApp =
+      (window as any).Telegram?.WebApp || (window as any).WebApp || null;
+    if (webApp && typeof webApp.ready === 'function') {
+      try {
+        webApp.ready();
+      } catch (e) {
+        console.warn('webApp.ready() failed:', e);
       }
-    }
-    
-    // Пробуем использовать SDK напрямую, если он доступен
-    if (WebApp && typeof WebApp === 'object' && typeof WebApp.ready === 'function') {
-      WebApp.ready()
-      return WebApp
+      return webApp;
     }
   } catch (error) {
-    console.log('Telegram WebApp not available:', error)
+    console.log('Telegram WebApp not available:', error);
   }
-  
-  return null
-}
+
+  return null;
+};
 
 export const getTelegramUser = () => {
   if (typeof window === 'undefined') {
-    return null
+    return null;
   }
 
   try {
-    const webApp = WebApp
+    const webApp =
+      (window as any).WebApp || (window as any).Telegram?.WebApp || null;
     if (webApp?.initDataUnsafe?.user) {
-      return webApp.initDataUnsafe.user
+      return webApp.initDataUnsafe.user;
     }
   } catch (error) {
-    console.log('Telegram WebApp not available:', error)
+    console.log('Telegram WebApp not available:', error);
   }
-  
-  return null
-}
+
+  return null;
+};

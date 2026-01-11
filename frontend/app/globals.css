@@ -89,6 +89,15 @@ select:focus {
   overscroll-behavior: contain;
 }
 
+/* Корневой скролл контейнер приложения */
+#app-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 /* Leaflet стили */
 .leaflet-container {
   height: 100%;

@@ -25,7 +25,9 @@ export default function MapInstruction() {
       </span>
       <div className="text-center bg-white bg-opacity-90 px-4 py-2 rounded-lg">
         <p className="text-sm font-medium text-gray-900">
-          Коснитесь точки на экране чтобы создать Pin
+          Коснитесь точки на экране чтобы создать Pin с задачей в этом месте,
+          например: (Подвезти до вокзала, Купить продукты, Сходить за посылкой и
+          т.д)
         </p>
       </div>
     </div>

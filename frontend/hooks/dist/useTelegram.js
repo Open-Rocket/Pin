@@ -3,7 +3,7 @@
 exports.__esModule = true;
 exports.useTelegram = void 0;
 var react_1 = require("react");
-var sdk_1 = require("@twa-dev/sdk");
+require("@twa-dev/sdk");
 exports.useTelegram = function () {
     var _a;
     var _b = react_1.useState(false), ready = _b[0], setReady = _b[1];
@@ -16,7 +16,7 @@ exports.useTelegram = function () {
         var initialized = false;
         // Функция для проверки и инициализации Telegram WebApp
         var initWebApp = function () {
-            var _a;
+            var _a, _b, _c, _d, _f, _g, _h;
             if (initialized)
                 return;
             try {
@@ -24,48 +24,47 @@ exports.useTelegram = function () {
                 var telegramWebApp = (_a = window.Telegram) === null || _a === void 0 ? void 0 : _a.WebApp;
                 // Если есть глобальный объект, используем SDK
                 if (telegramWebApp) {
-                    if (sdk_1.WebApp &&
-                        typeof sdk_1.WebApp === 'object' &&
-                        typeof sdk_1.WebApp.ready === 'function') {
-                        sdk_1.WebApp.ready();
+                    if (window.WebApp &&
+                        typeof window.WebApp === 'object' &&
+                        typeof window.WebApp.ready === 'function') {
+                        try {
+                            window.WebApp.ready();
+                        }
+                        catch (e) {
+                            console.warn('WebApp.ready() failed:', e);
+                        }
                         // 1️⃣ Запрашиваем полноэкранный режим
                         try {
-                            if (typeof sdk_1.WebApp.expand === 'function') {
-                                sdk_1.WebApp.expand();
-                            }
+                            (_c = (_b = window.WebApp).expand) === null || _c === void 0 ? void 0 : _c.call(_b);
                         }
                         catch (e) {
                             console.warn('expand not available:', e);
                         }
                         // 2️⃣ Запрещаем закрытие свайпом вниз (WebApp API)
                         try {
-                            if (typeof sdk_1.WebApp.disallowVerticalSwipe === 'function') {
-                                sdk_1.WebApp.disallowVerticalSwipe();
-                            }
+                            (_f = (_d = window.WebApp).disallowVerticalSwipe) === null || _f === void 0 ? void 0 : _f.call(_d);
                         }
                         catch (e) {
                             console.warn('disallowVerticalSwipe not available:', e);
                         }
                         // 3️⃣ Блокируем ориентацию экрана в портретный режим
                         try {
-                            if (typeof sdk_1.WebApp.lockOrientation === 'function') {
-                                sdk_1.WebApp.lockOrientation();
-                            }
+                            (_h = (_g = window.WebApp).lockOrientation) === null || _h === void 0 ? void 0 : _h.call(_g);
                         }
                         catch (e) {
                             console.warn('lockOrientation not available:', e);
                         }
                         // Показываем кнопку закрытия приложения
-                        if (typeof sdk_1.WebApp.showCloseButton === 'function') {
-                            sdk_1.WebApp.showCloseButton();
+                        if (typeof window.WebApp.showCloseButton === 'function') {
+                            window.WebApp.showCloseButton();
                         }
                         // Обработчик для кнопки закрытия
-                        if (typeof sdk_1.WebApp.onEvent === 'function') {
-                            sdk_1.WebApp.onEvent('backButtonClicked', function () {
+                        if (typeof window.WebApp.onEvent === 'function') {
+                            window.WebApp.onEvent('backButtonClicked', function () {
                                 // Запрашиваем подтверждение перед закрытием
                                 if (window.confirm('Вы уверены, что хотите закрыть приложение?')) {
-                                    if (typeof sdk_1.WebApp.close === 'function') {
-                                        sdk_1.WebApp.close();
+                                    if (typeof window.WebApp.close === 'function') {
+                                        window.WebApp.close();
                                     }
                                 }
                             });
@@ -73,19 +72,25 @@ exports.useTelegram = function () {
                         // 🔒 ЖЕСТКАЯ БЛОКИРОВКА TOUCH-СОБЫТИЙ (iOS Fix)
                         // Предотвращает закрытие приложения свайпом вниз
                         setupTouchLock();
-                        setWebApp(sdk_1.WebApp);
+                        setWebApp(window.WebApp);
                         initialized = true;
                         setReady(true);
                         return true;
                     }
                 }
                 // Пробуем использовать SDK напрямую
-                if (sdk_1.WebApp && typeof sdk_1.WebApp === 'object') {
-                    var tg_1 = sdk_1.WebApp;
+                if (window.WebApp &&
+                    typeof window.WebApp === 'object') {
+                    var tg_1 = window.WebApp;
                     // Проверяем, что мы в Telegram (есть initDataUnsafe или version)
                     if ((tg_1.initDataUnsafe || tg_1.version) &&
                         typeof tg_1.ready === 'function') {
-                        tg_1.ready();
+                        try {
+                            tg_1.ready();
+                        }
+                        catch (e) {
+                            console.warn('tg.ready() failed:', e);
+                        }
                         // 1️⃣ Запрашиваем полноэкранный режим
                         try {
                             if (typeof tg_1.expand === 'function') {
@@ -202,6 +207,8 @@ exports.useTelegram = function () {
 function setupTouchLock() {
     if (typeof window === 'undefined')
         return;
+    if (window.__telegramMiniAppTouchLockInstalled)
+        return;
     // 1️⃣ БЛОКИРУЕМ touchmove НА BODY И HTML (passive: false для preventDefault)
     var preventTouchMove = function (e) {
         // Исключение: разрешаем скролл в специальных контейнерах
@@ -216,10 +223,11 @@ function setupTouchLock() {
         e.preventDefault();
     };
     // Добавляем слушатель с passive: false (чтобы preventDefault работал)
+    var onTouchStart = function (_e) {
+        // no-op: ensure touchstart is present for touchmove detection
+    };
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
     document.addEventListener('touchmove', preventTouchMove, { passive: false });
-    document.body.addEventListener('touchmove', preventTouchMove, {
-        passive: false
-    });
     // 2️⃣ БЛОКИРУЕМ OVERSCROLL ПОВЕДЕНИЕ
     // Это встроенное поведение iOS которое вызывает bounce-эффект
     var html = document.documentElement;
@@ -231,7 +239,7 @@ function setupTouchLock() {
     if (!document.getElementById('telegram-miniapp-lock-styles')) {
         var style = document.createElement('style');
         style.id = 'telegram-miniapp-lock-styles';
-        style.textContent = "\n      /* \u0417\u0430\u043F\u0440\u0435\u0449\u0430\u0435\u043C overscroll pull-to-refresh \u043D\u0430 iOS */\n      html, body {\n        overscroll-behavior: none;\n        overscroll-behavior-y: none;\n        -webkit-user-select: none;\n        user-select: none;\n        -webkit-touch-callout: none;\n        -webkit-tap-highlight-color: transparent;\n      }\n\n      /* \u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u043E \u0444\u0438\u043A\u0441\u0438\u0440\u0443\u0435\u043C html \u0438 body */\n      html {\n        position: fixed;\n        width: 100%;\n        height: 100%;\n        overflow: hidden;\n        top: 0;\n        left: 0;\n      }\n\n      body {\n        position: fixed;\n        width: 100%;\n        height: 100%;\n        overflow: hidden;\n        top: 0;\n        left: 0;\n        margin: 0;\n        padding: 0;\n      }\n\n      /* \u0420\u0430\u0437\u0440\u0435\u0448\u0430\u0435\u043C \u0441\u043A\u0440\u043E\u043B\u043B \u0442\u043E\u043B\u044C\u043A\u043E \u0432 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u044C\u043D\u044B\u0445 \u043A\u043E\u043D\u0442\u0435\u0439\u043D\u0435\u0440\u0430\u0445 */\n      [data-allow-scroll],\n      .overflow-y-auto,\n      .modal-slide-up,\n      [role=\"dialog\"] {\n        overscroll-behavior: contain;\n        overflow-y: auto;\n        -webkit-overflow-scrolling: touch;\n      }\n    ";
+        style.textContent = "\n      /* \u0417\u0430\u043F\u0440\u0435\u0449\u0430\u0435\u043C overscroll pull-to-refresh \u043D\u0430 iOS */\n      html, body, #__next {\n        overscroll-behavior: none;\n        overscroll-behavior-y: none;\n        -webkit-user-select: none;\n        user-select: none;\n        -webkit-touch-callout: none;\n        -webkit-tap-highlight-color: transparent;\n      }\n\n      /* \u0413\u0430\u0440\u0430\u043D\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u043E \u0444\u0438\u043A\u0441\u0438\u0440\u0443\u0435\u043C html, body \u0438 \u043A\u043E\u0440\u043D\u0435\u0432\u043E\u0439 \u043A\u043E\u043D\u0442\u0435\u0439\u043D\u0435\u0440 Next.js */\n      html, body, #__next {\n        position: fixed;\n        width: 100%;\n        height: 100%;\n        overflow: hidden;\n        top: 0;\n        left: 0;\n        margin: 0;\n        padding: 0;\n      }\n\n      /* \u0420\u0430\u0437\u0440\u0435\u0448\u0430\u0435\u043C \u0441\u043A\u0440\u043E\u043B\u043B \u0442\u043E\u043B\u044C\u043A\u043E \u0432 \u0441\u043F\u0435\u0446\u0438\u0430\u043B\u044C\u043D\u044B\u0445 \u043A\u043E\u043D\u0442\u0435\u0439\u043D\u0435\u0440\u0430\u0445 */\n      [data-allow-scroll],\n      .overflow-y-auto,\n      .modal-slide-up,\n      [role=\"dialog\"] {\n        overscroll-behavior: contain;\n        overflow-y: auto;\n        -webkit-overflow-scrolling: touch;\n      }\n    ";
         document.head.appendChild(style);
     }
     // 4️⃣ БЛОКИРУЕМ WHEEL И POINTER СОБЫТИЯ (для мыши)
@@ -243,9 +251,14 @@ function setupTouchLock() {
         }
     };
     document.addEventListener('wheel', preventWheel, { passive: false });
-    // 5️⃣ ЛОГИРОВАНИЕ (для отладки)
-    console.log('🔒 Telegram Mini App Touch Lock активирована');
-    console.log('✅ Свайп вниз заблокирован');
-    console.log('✅ Overscroll поведение запрещено');
-    console.log('✅ Body/HTML фиксированы');
+    window.__telegramMiniAppTouchLockInstalled = true;
+}
+// Ensure touch lock is always installed when running in browser
+if (typeof window !== 'undefined') {
+    try {
+        setupTouchLock();
+    }
+    catch (e) {
+        // ignore
+    }
 }

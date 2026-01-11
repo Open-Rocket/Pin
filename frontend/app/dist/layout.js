@@ -28,6 +28,12 @@ function RootLayout(_a) {
                     overflow: 'hidden'
                 } },
                 React.createElement(script_1["default"], { src: "https://telegram.org/js/telegram-web-app.js", strategy: "afterInteractive" }),
-                React.createElement(TelegramProvider_1.TelegramProvider, null, children)))));
+                React.createElement(TelegramProvider_1.TelegramProvider, null,
+                    React.createElement("div", { id: "app-container", "data-allow-scroll": true, style: {
+                            width: '100%',
+                            height: '100%',
+                            overflowY: 'auto',
+                            WebkitOverflowScrolling: 'touch'
+                        } }, children))))));
 }
 exports["default"] = RootLayout;
