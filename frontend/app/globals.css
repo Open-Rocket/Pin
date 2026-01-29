@@ -1,155 +1,26 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 :root {
-  --tg-theme-bg-color: #ffffff;
-  --tg-theme-text-color: #000000;
-  --tg-theme-hint-color: #999999;
-  --tg-theme-link-color: #2481cc;
-  --tg-theme-button-color: #2481cc;
-  --tg-theme-button-text-color: #ffffff;
-  --tg-theme-secondary-bg-color: #f1f1f1;
-
-  /* Pin цветовая схема */
-  --pin-primary: #1a5f3f; /* Темно-зеленый для кнопок и маркеров */
-  --pin-primary-light: #2d8a5f; /* Светло-зеленый для тегов цен */
-  --pin-accent: #4caf50; /* Акцентный зеленый */
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
-html {
-  color-scheme: light;
-  /* 3️⃣ Фиксируем viewport */
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* 4️⃣ Запрещаем скролл на body (скролл только на внутренних элементах) */
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background-color: var(--tg-theme-bg-color);
-  color: var(--tg-theme-text-color);
-  caret-color: #000000;
-}
-
-/* Стили для инпутов и текстовых полей */
-input,
-textarea,
-select {
-  color: #000000;
-  caret-color: #000000;
-  background-color: #ffffff;
-  border-color: #e0e0e0;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #999999;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: var(--tg-theme-button-color);
-  box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.1);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-/* Telegram Web App стили */
-.tg-viewport {
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* Разрешаем скролл в модальных окнах */
-.modal-slide-up,
-.overflow-y-auto {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-/* Корневой скролл контейнер приложения */
-#app-container {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-/* Leaflet стили */
-.leaflet-container {
-  height: 100%;
-  width: 100%;
-  z-index: 1;
-}
-
-.leaflet-popup-content-wrapper {
-  border-radius: 8px;
-}
-
-.leaflet-popup-content {
-  margin: 12px;
-}
-
-.custom-pin-icon {
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Анимации для модальных окон */
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-.modal-slide-up {
-  animation: slideUp 0.3s ease-out;
-  /* Разрешаем скролл именно в этом элементе */
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Стили для скролла в модальных окнах */
-.modal-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 10px;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
