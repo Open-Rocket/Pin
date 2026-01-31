@@ -6,15 +6,21 @@ interface Window {
       requestFullscreen?: () => void;
       disableVerticalSwipes?: () => void;
       onEvent?: (
-        event: 'locationChanged' | 'qrTextReceived' | 'scanQrPopupClosed',
-        handler: (data: Record<string, unknown>) => void,
+        event:
+          | 'locationChanged'
+          | 'qrTextReceived'
+          | 'scanQrPopupClosed'
+          | 'mainButtonClicked',
+        handler: (data?: Record<string, unknown>) => void,
       ) => void;
-
       offEvent?: (
-        event: 'locationChanged' | 'qrTextReceived' | 'scanQrPopupClosed',
-        handler: (data: Record<string, unknown>) => void,
+        event:
+          | 'locationChanged'
+          | 'qrTextReceived'
+          | 'scanQrPopupClosed'
+          | 'mainButtonClicked',
+        handler: (data?: Record<string, unknown>) => void,
       ) => void;
-
       expand: () => void;
 
       isFullscreen?: boolean;

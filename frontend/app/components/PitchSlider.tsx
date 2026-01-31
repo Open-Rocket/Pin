@@ -35,7 +35,7 @@ export const PitchSlider: FC<PitchSliderProps> = ({
         right: '5%',
         top: '50%',
         transform: 'translateY(-50%)',
-        zIndex: 25,
+        zIndex: 5,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

@@ -1,0 +1,51 @@
+.user-marker {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+}
+
+.pin-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pin-description {
+  cursor: pointer;
+  display: inline-block;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 120px;
+  max-width: 200px;
+  text-align: center;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000;
+}
+
+.pin-user-photo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-top: 4px;
+}
+
+.cluster-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #000;
+}

@@ -1,20 +1,31 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+
 import dynamic from 'next/dynamic';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { MapRef } from 'react-map-gl/maplibre';
 
+import { TouchInfo } from './TouchInfo';
 import { UserLocation } from './UserLocation';
+import { ZoomTo2Button } from './Zoom2Btn';
 import { PitchSlider } from './PitchSlider';
+import { CreatePinData } from '../types/index';
+import PinForm from './PinForm';
+import { db } from '../../lib/firebase';
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
+} from 'firebase/firestore';
 
 const Map = dynamic(
   () => import('react-map-gl/maplibre').then((mod) => mod.Map),
   { ssr: false },
 );
-
-const STORAGE_KEY = 'userThought'; // ключ для DeviceStorage
 
 export default function GlobeMap() {
   const mapRef = useRef<MapRef | null>(null);
@@ -23,122 +34,259 @@ export default function GlobeMap() {
     null,
   );
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [thought, setThought] = useState('hello'); // мысль над головой
+
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [pinLocation, setPinLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [pins, setPins] = useState<(CreatePinData & { userPhoto?: string })[]>(
+    [],
+  );
+  const [markers, setMarkers] = useState<maplibregl.Marker[]>([]);
 
   const handleMapLoad = () => setMapLoaded(true);
 
-  // ===== Загрузка мысли из DeviceStorage при инициализации =====
+  // --- Firestore: подписка на пины ---
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-    if (!tg?.DeviceStorage?.getItem) return;
+    const pinsCollection = collection(db, 'pins');
+    const q = query(pinsCollection, orderBy('created_at', 'desc'));
 
-    tg.DeviceStorage.getItem(STORAGE_KEY, (err, value) => {
-      if (!err && value) {
-        setThought(value);
-      }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const now = new Date().toISOString();
+      const fetchedPins: (CreatePinData & { userPhoto?: string })[] =
+        snapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              description: data.description,
+              location: data.location,
+              created_at: data.created_at,
+              expires_at: data.expires_at,
+              userId: data.userId,
+              userPhoto: data.userPhoto,
+            };
+          })
+          .filter((p) => !p.expires_at || p.expires_at > now); // пропускаем устаревшие
+      setPins(fetchedPins);
     });
+
+    return () => unsubscribe();
   }, []);
 
+  const handleSubmit = async (data: CreatePinData & { userPhoto?: string }) => {
+    setSheetVisible(false);
+
+    try {
+      await addDoc(collection(db, 'pins'), data);
+    } catch (err) {
+      console.error('Ошибка при сохранении пина в Firestore:', err);
+    }
+  };
+
   useEffect(() => {
-    if (!mapLoaded || !mapRef.current || !userLocation) return;
+    if (!mapLoaded || !mapRef.current) return () => {};
 
     const map = mapRef.current.getMap();
-
-    // Фокус при входе в апку
-    map.flyTo({
-      center: userLocation,
-      zoom: 1,
-      essential: true,
-    });
-
-    // Удаляем предыдущий маркер
-    if (markerRef.current) {
-      markerRef.current.remove();
-      markerRef.current = null;
-    }
-
-    const tg = window.Telegram?.WebApp;
-    const photoUrl = tg?.initDataUnsafe?.user?.photo_url;
-
-    if (!photoUrl) return;
-
-    // === Основной маркер пользователя ===
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
-    wrapper.style.width = '52px';
-    wrapper.style.height = '52px';
-    wrapper.style.padding = '2px';
-    wrapper.style.borderRadius = '50%';
-    wrapper.style.background = '#000';
-    wrapper.style.boxShadow = '0 4px 10px rgba(0,0,0,0.35)';
-    wrapper.style.cursor = 'pointer';
-
-    wrapper.onclick = () => {
-      map.flyTo({
-        center: userLocation,
-        zoom: 10,
-        essential: true,
-      });
+    const handleClick = (e: maplibregl.MapMouseEvent) => {
+      setPinLocation({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      setSheetVisible(true);
     };
 
-    const img = document.createElement('img');
-    img.src = photoUrl;
-    img.style.width = '48px';
-    img.style.height = '48px';
-    img.style.borderRadius = '50%';
-    img.style.objectFit = 'cover';
-    img.style.display = 'block';
-    wrapper.appendChild(img);
+    map.on('click', handleClick);
+    return () => map.off('click', handleClick);
+  }, [mapLoaded]);
 
-    // === Облачко с мыслью ===
-    const bubble = document.createElement('div');
-    bubble.textContent = thought || '...';
-    bubble.style.position = 'absolute';
-    bubble.style.bottom = '90%';
-    bubble.style.left = '50%';
-    bubble.style.transform = 'translateX(-50%) translateY(-10px)';
-    bubble.style.padding = '6px 10px';
-    bubble.style.borderRadius = '20px';
-    bubble.style.background = 'rgba(0,0,0,0.80)';
-    bubble.style.color = '#fff';
-    bubble.style.fontSize = '12px';
-    bubble.style.textAlign = 'center';
-    bubble.style.cursor = 'pointer';
-    bubble.style.userSelect = 'none';
-    bubble.style.minWidth = '100px';
-    bubble.style.maxWidth = '180px';
-    bubble.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || !userLocation) return () => {};
+    const map = mapRef.current.getMap();
+    map.flyTo({ center: userLocation, zoom: 5, essential: true });
 
-    bubble.onclick = (e) => {
-      e.stopPropagation();
-      const newThought = prompt('Ваша мысль (до 30 символов)', thought);
-      if (newThought !== null) {
-        const trimmed = newThought.slice(0, 30);
-        const finalThought = newThought.trim() ? trimmed : thought;
-        bubble.textContent = finalThought;
-        setThought(finalThought);
+    if (!markerRef.current) {
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.width = '60px';
+      wrapper.style.height = '60px';
+      wrapper.style.cursor = 'pointer';
+      wrapper.style.zIndex = '5';
 
-        // ===== Сохраняем в DeviceStorage =====
-        tg?.DeviceStorage?.setItem(STORAGE_KEY, finalThought, (err, _) => {
-          if (err) console.error('Ошибка сохранения мысли:', err);
+      const outer = document.createElement('div');
+      outer.style.width = '32px';
+      outer.style.height = '32px';
+      outer.style.borderRadius = '50%';
+      outer.style.background = 'rgba(0,0,0,0.2)';
+      outer.style.position = 'absolute';
+      outer.style.top = '50%';
+      outer.style.left = '50%';
+      outer.style.transform = 'translate(-50%, -50%)';
+
+      const inner = document.createElement('div');
+      inner.style.width = '24px';
+      inner.style.height = '24px';
+      inner.style.borderRadius = '50%';
+      inner.style.background = '#000';
+      inner.style.position = 'absolute';
+      inner.style.top = '50%';
+      inner.style.left = '50%';
+      inner.style.transform = 'translate(-50%, -50%)';
+
+      const text = document.createElement('div');
+      text.innerText = 'Я';
+      text.style.position = 'absolute';
+      text.style.top = '50%';
+      text.style.left = '50%';
+      text.style.transform = 'translate(-50%, -50%)';
+      text.style.color = '#fff';
+      text.style.fontSize = '12px';
+      text.style.fontWeight = 'bold';
+      text.style.userSelect = 'none';
+      text.style.pointerEvents = 'none';
+
+      wrapper.appendChild(outer);
+      wrapper.appendChild(inner);
+      wrapper.appendChild(text);
+
+      wrapper.onclick = (e) => {
+        e.stopPropagation();
+        map.flyTo({ center: userLocation, zoom: 12, essential: true });
+      };
+
+      markerRef.current = new maplibregl.Marker({
+        element: wrapper,
+        anchor: 'center',
+      })
+        .setLngLat(userLocation)
+        .addTo(map);
+    } else {
+      markerRef.current.setLngLat(userLocation);
+    }
+  }, [mapLoaded, userLocation]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return;
+
+    const map = mapRef.current.getMap();
+    if (!map) return;
+
+    const updateMarkers = () => {
+      setMarkers((prev) => {
+        prev.forEach((m) => m.remove());
+        return [];
+      });
+
+      const zoom = map.getZoom();
+      if (pins.length === 0) return;
+
+      const now = new Date().toISOString();
+      const activePins = pins.filter(
+        (p) => !p.expires_at || p.expires_at > now,
+      );
+
+      const newMarkers: maplibregl.Marker[] = [];
+
+      if (zoom < 7) {
+        // кластеризация
+        const clusters: { lat: number; lng: number; count: number }[] = [];
+
+        activePins.forEach((p) => {
+          const cluster = clusters.find(
+            (c) =>
+              Math.abs(c.lat - p.location.lat) < 0.5 &&
+              Math.abs(c.lng - p.location.lng) < 0.5,
+          );
+          if (cluster) cluster.count++;
+          else
+            clusters.push({
+              lat: p.location.lat,
+              lng: p.location.lng,
+              count: 1,
+            });
+        });
+
+        clusters.forEach((c) => {
+          const el = document.createElement('div');
+          el.style.width = '32px';
+          el.style.height = '32px';
+          el.style.borderRadius = '50%';
+          el.style.background = 'white';
+          el.style.border = '2px solid black';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          el.style.fontWeight = 'bold';
+          el.style.color = '#000';
+          el.innerText = String(c.count);
+
+          const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([c.lng, c.lat])
+            .addTo(map);
+          newMarkers.push(m);
+        });
+      } else {
+        // отдельные пины
+        activePins.forEach((p) => {
+          const wrapper = document.createElement('div');
+          wrapper.style.display = 'flex';
+          wrapper.style.flexDirection = 'column';
+          wrapper.style.alignItems = 'center';
+
+          const el = document.createElement('div');
+          el.style.cursor = 'pointer';
+          el.style.display = 'inline-block';
+          el.style.background = '#fff';
+          el.style.border = '2px solid #000';
+          el.style.borderRadius = '12px';
+          el.style.padding = '8px';
+          el.style.minWidth = '120px';
+          el.style.maxWidth = '200px';
+          el.style.textAlign = 'center';
+          el.style.wordWrap = 'break-word';
+          el.style.overflow = 'hidden';
+          el.style.textOverflow = 'ellipsis';
+          el.innerHTML = p.description;
+          el.style.color = '#000';
+
+          wrapper.appendChild(el);
+
+          if (p.userPhoto) {
+            const img = document.createElement('img');
+            img.src = p.userPhoto;
+            img.style.width = '32px';
+            img.style.height = '32px';
+            img.style.borderRadius = '50%';
+            img.style.marginTop = '4px';
+            wrapper.appendChild(img);
+          }
+
+          const m = new maplibregl.Marker({
+            element: wrapper,
+            anchor: 'bottom',
+          })
+            .setLngLat([p.location.lng, p.location.lat])
+            .addTo(map);
+
+          newMarkers.push(m);
         });
       }
+
+      setMarkers(newMarkers);
     };
 
-    wrapper.appendChild(bubble);
+    updateMarkers();
+    map.on('zoom', updateMarkers);
 
-    markerRef.current = new maplibregl.Marker({
-      element: wrapper,
-      anchor: 'center',
-    })
-      .setLngLat(userLocation)
-      .addTo(map);
-  }, [mapLoaded, userLocation, thought]);
+    // функция очистки — возвращаем void
+    return () => {
+      map.off('zoom', updateMarkers);
+    };
+  }, [mapLoaded, pins]);
 
   return (
-    <>
+    <div>
       <UserLocation onLocation={setUserLocation} />
       <PitchSlider mapRef={mapRef} minPitch={0} maxPitch={60} />
+      <TouchInfo />
+      <ZoomTo2Button mapRef={mapRef} />
 
       <Map
         ref={mapRef}
@@ -153,6 +301,15 @@ export default function GlobeMap() {
         style={{ width: '100%', height: '100vh' }}
         attributionControl={false}
       />
-    </>
+
+      {pinLocation && (
+        <PinForm
+          location={pinLocation}
+          sheetVisible={sheetVisible}
+          onClose={() => setSheetVisible(false)}
+          onSubmit={handleSubmit}
+        />
+      )}
+    </div>
   );
 }
