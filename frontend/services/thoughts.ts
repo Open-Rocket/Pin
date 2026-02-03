@@ -1,4 +1,3 @@
-// src/services/thoughts.ts
 import {
   collection,
   addDoc,
@@ -15,7 +14,7 @@ export interface ThoughtData {
   location: { lat: number; lng: number };
   userId?: string;
   userPhoto?: string;
-  created_at?: string; // добавлено
+  created_at?: string;
   expires_at?: string;
 }
 
@@ -29,13 +28,13 @@ export async function createThought(data: ThoughtData) {
   });
 }
 
-// Подписка на мысли (realtime)
+// Подписка на мысли
 export function subscribeThoughts(
   onChange: (thoughts: (ThoughtData & { id: string })[]) => void,
 ) {
   const q = query(
     collection(db, 'thoughts'),
-    where('expiresAt', '>', new Date()), // показываем только активные
+    where('expiresAt', '>', new Date()),
   );
 
   return onSnapshot(q, (snapshot) => {

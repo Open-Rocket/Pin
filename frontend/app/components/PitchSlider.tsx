@@ -5,14 +5,14 @@ import { MapRef } from 'react-map-gl/maplibre';
 
 interface PitchSliderProps {
   mapRef: React.RefObject<MapRef | null>;
-  minPitch?: number; // минимальный угол наклона
-  maxPitch?: number; // максимальный угол наклона
+  minPitch?: number;
+  maxPitch?: number;
 }
 
 export const PitchSlider: FC<PitchSliderProps> = ({
   mapRef,
-  minPitch = 0, // сверху вид
-  maxPitch = 60, // максимальный наклон
+  minPitch = 0,
+  maxPitch = 60,
 }) => {
   const [pitch, setPitch] = useState(minPitch);
 
@@ -49,7 +49,7 @@ export const PitchSlider: FC<PitchSliderProps> = ({
         value={pitch}
         onChange={handleChange}
         style={{
-          writingMode: 'vertical-rl', // вместо 'bt-lr'
+          writingMode: 'vertical-rl',
           WebkitAppearance: 'slider-vertical',
           width: 12,
           height: 220,

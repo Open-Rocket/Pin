@@ -15,10 +15,8 @@ export const ZoomTo2Button: React.FC<ZoomButtonProps> = ({ mapRef }) => {
     const map = mapRef.current.getMap();
     map.flyTo({
       zoom: 1,
-      // Можно добавить центр, если хочешь, например [0,0]
-      // center: [0, 0],
       essential: true,
-      duration: 1000, // анимация в мс
+      duration: 1000,
     });
   };
 

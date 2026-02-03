@@ -47,7 +47,7 @@ export default function GlobeMap() {
 
   const handleMapLoad = () => setMapLoaded(true);
 
-  // --- Firestore: подписка на пины ---
+  // подписка на пины из Firestore
   useEffect(() => {
     const pinsCollection = collection(db, 'pins');
     const q = query(pinsCollection, orderBy('created_at', 'desc'));
@@ -67,7 +67,7 @@ export default function GlobeMap() {
               userPhoto: data.userPhoto,
             };
           })
-          .filter((p) => !p.expires_at || p.expires_at > now); // пропускаем устаревшие
+          .filter((p) => !p.expires_at || p.expires_at > now);
       setPins(fetchedPins);
     });
 
@@ -185,7 +185,7 @@ export default function GlobeMap() {
       const newMarkers: maplibregl.Marker[] = [];
 
       if (zoom < 7) {
-        // кластеризация
+        // кластеризация пинов
         const clusters: { lat: number; lng: number; count: number }[] = [];
 
         activePins.forEach((p) => {
@@ -275,7 +275,6 @@ export default function GlobeMap() {
     updateMarkers();
     map.on('zoom', updateMarkers);
 
-    // функция очистки — возвращаем void
     return () => {
       map.off('zoom', updateMarkers);
     };
@@ -295,7 +294,7 @@ export default function GlobeMap() {
           longitude: userLocation?.[0] ?? 0,
           zoom: 2,
         }}
-        mapStyle="https://api.maptiler.com/maps/streets-v4/style.json?key=U0SQYQUL3hLC7BWkcwVL"
+        mapStyle={`https://api.maptiler.com/maps/streets-v4/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
         projection="globe"
         onLoad={handleMapLoad}
         style={{ width: '100%', height: '100vh' }}
